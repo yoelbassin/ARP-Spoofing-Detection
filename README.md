@@ -1,4 +1,4 @@
-# ARP spoofing Detection tool
+# ARP spoofing detection tool
 An ARP spoofing detection written in python using Scapy library, based on the paper "Detecting ARP Spoofing: An Active Technique" by Vivek Ramachandran and Sukumar Nandi, India
 
 

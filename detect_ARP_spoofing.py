@@ -46,7 +46,7 @@ def incoming_reply(pkt):
     :param pkt: sniffed packet
     :return: the packet is an incoming ARP reply message (True od False)
     """
-    return pkt[ARP].psrc != '10.0.2.8' and pkt[ARP].op == 2
+    return pkt[ARP].psrc != str(get_if_addr(conf.iface)) and pkt[ARP].op == 2
 
 
 def outgoing_req(pkt):
@@ -56,7 +56,7 @@ def outgoing_req(pkt):
     :param pkt: sniffed packet
     :return: the packet is an incoming ARP reply message (True od False)
     """
-    return pkt[ARP].psrc == '10.0.2.8' and pkt[ARP].op == 1
+    return pkt[ARP].psrc == str(get_if_addr(conf.iface)) and pkt[ARP].op == 1
 
 
 def add_req(pkt):
@@ -77,7 +77,7 @@ def check_arp_header(pkt):
     :return:
     """
     if not pkt[Ether].src == pkt[ARP].hwsrc or not pkt[Ether].dst == pkt[ARP].hwdst:
-        return alarm()
+        return alarm('inconsistent ARP message')
     return known_traffic(pkt)
 
 
@@ -98,7 +98,7 @@ def known_traffic(pkt):
     elif IP_MAC_PAIRS[pkt[ARP].psrc] == pkt[ARP].hwsrc:
         return
     # If the packet's ip source is in the safe pairs table, but the MAC address doesn't match, raise an alarm
-    return alarm()
+    return alarm('IP-MAC pair change detected')
 
 
 def spoof_detection(pkt):
@@ -119,7 +119,7 @@ def spoof_detection(pkt):
         E = Ether(dst=mac)
         # If we don't receive a TCP ACK, we raise an alarm message
         if not srp1(E / ip / SYN, verbose=False, timeout=2):
-            alarm()
+            alarm('No TCP ACK, fake IP-MAC pair')
         # If we receive a TCP ACK, we add the ip and mac pair to our IP_MAC_PAIRS table
         else:
             IP_MAC_PAIRS[ip_] = pkt[ARP].hwsrc
@@ -130,13 +130,13 @@ def spoof_detection(pkt):
         send(ARP(op=1, pdst=ip_), verbose=False)
 
 
-def alarm():
+def alarm(alarm_type):
     """
     This module raises an alarm on detection of ARP spoofing
 
     :return:
     """
-    print('Under Attack')
+    print('Under Attack ', alarm_type)
 
 
 if __name__ == "__main__":
